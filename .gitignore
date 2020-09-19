@@ -50,3 +50,6 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+#Assignment 1 Builds
+assignment1/build
