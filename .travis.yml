@@ -4,6 +4,6 @@ install: skip
 script:
   - cd assignment1
   - make
-  - ./giftcardreader crash1.gft
-  - ./giftcardreader crash2.gft
+  - ./giftcardreader 1 crash1.gft
+  - ./giftcardreader 1 crash2.gft
   - timeout 1 ./giftcardreader 1 ./hang.gft
