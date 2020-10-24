@@ -7,3 +7,5 @@ script:
   - ./giftcardreader 1 crash1.gft
   - ./giftcardreader 1 crash2.gft
   - timeout 1 ./giftcardreader 1 ./hang.gft
+  - ./giftcardreader 2 crash2.gft
+  - ./giftcardreader 2 examplefile.gft
