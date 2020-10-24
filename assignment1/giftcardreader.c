@@ -195,7 +195,7 @@ struct this_gift_card *gift_card_reader(FILE *input_fd) {
 		// Make something the size of the rest and read it in
     if(ret_val->num_bytes < 0){
       printf("%d is not a valid size for Gift Card\n",ret_val->num_bytes);
-      exit(1);
+      exit(0);
     }
 		ptr = malloc(ret_val->num_bytes);
 		fread(ptr, ret_val->num_bytes, 1, input_fd);
