@@ -19,6 +19,7 @@ void animate(char *msg, unsigned char *program) {
     unsigned char *pc = program;
     int i = 0;
     int zf = 0;
+    char offset = 0;
     while (1) {
         unsigned char op, arg1, arg2;
         op = *pc;
@@ -28,13 +29,15 @@ void animate(char *msg, unsigned char *program) {
             case 0x00:
                 break;
             case 0x01:
-                regs[arg1] = *mptr;
+                regs[arg1] = *(mptr+offset);
                 break;
             case 0x02:
-                *mptr = regs[arg1];
+                *(mptr+offset) = regs[arg1];
                 break;
             case 0x03:
-                mptr += (char)arg1;
+                if(offset+(char)arg1<32 && offset+(char)arg1>0){
+                  offset += (char)arg1;
+                }
                 break;
             case 0x04:
                 regs[arg2] = arg1;
@@ -186,6 +189,10 @@ struct this_gift_card *gift_card_reader(FILE *input_fd) {
 		fread(&ret_val->num_bytes, 4,1, input_fd);
 
 		// Make something the size of the rest and read it in
+    if(ret_val->num_bytes < 0){
+      printf("%d is not a valid size for Gift Card\n",ret_val->num_bytes);
+      exit(1);
+    }
 		ptr = malloc(ret_val->num_bytes);
 		fread(ptr, ret_val->num_bytes, 1, input_fd);
 
