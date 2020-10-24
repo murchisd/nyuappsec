@@ -20,6 +20,7 @@ void animate(char *msg, unsigned char *program) {
     int i = 0;
     int zf = 0;
     char offset = 0;
+    int ic = 0;
     while (1) {
         unsigned char op, arg1, arg2;
         op = *pc;
@@ -35,6 +36,7 @@ void animate(char *msg, unsigned char *program) {
                 *(mptr+offset) = regs[arg1];
                 break;
             case 0x03:
+                //Only move pointer through offset variable and do not allow offset outside of message
                 if(offset+(char)arg1<32 && offset+(char)arg1>0){
                   offset += (char)arg1;
                 }
@@ -63,7 +65,9 @@ void animate(char *msg, unsigned char *program) {
                 break;
         }
         pc+=3;
-        if (pc > program+256) break;
+        //Allow 1000 total instruction executions
+        ic+=1;
+        if (pc > program+256 || ic > 999) break;
     }
 done:
     return;
