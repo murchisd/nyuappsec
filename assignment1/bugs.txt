@@ -70,6 +70,24 @@ hang.gft
      ic+=1;
      if (pc > program+256 || ic > 999) break;
 
+Coverage Tests
+  - Neither of my first two tests actually made it to the print functionality for Record Type 1 or 2
+  - The two tests were simple Amount Change and Message gift cards, which did not crash anything but ensure proper functionality
+  - cov1.gft covers print functionality for Record Type 1 (Amount Change) - Lines 82-86
+  - cov2.gft covers print functionality for Record Type 2 (Message) - Lines 90-91
+  - Coverage report before creating cov1.gft and cov2.gft is located in assignment1/giftcardreader-lcov
+    Overall coverage rate:
+      lines......: 65.6% (236 of 360 lines)
+      functions..: 83.3% (10 of 12 functions)
+  - Coverage report after creating cov1.gft and cov2.gft is located in assignment1/giftcardreader-lcov-part3
+    Overall coverage rate:
+      lines......: 83.3% (300 of 360 lines)
+      functions..: 91.7% (11 of 12 functions)
+
+AFL Tests
+  - AFL tests are stored in assignment1/afl_findings/(queue|crashes|hangs)
+  - Tests generated after fixing the 2 crashes are located at assignment1/afl_findings_postfix/(queue|crashes|hangs)
+
 AFL Crashes
 
 - Key to debugging these was adding a print statement in animate that for each instruction would print op,arg1, and arg2.

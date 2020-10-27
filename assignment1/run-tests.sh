@@ -7,6 +7,7 @@ then
 	echo "Negative Read test failed"
         failed=1
 fi
+
 ./build/giftcardreader_coverage 1 ./tests/crash2.gft > /dev/null
 if [[ $? -ne 0 ]]
 then

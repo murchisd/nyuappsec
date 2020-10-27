@@ -1,0 +1,72 @@
+crash1.gft
+  - Crash at 190-Program tries to call fread based on user input with no checks
+    By passing a negative number to fread we can cause the program to crash
+    Just set first 4 bytes in crash1.gft to a negative number, didnt need rest of gift card
+
+  - lines 186 - 190 >
+
+    186:fread(&ret_val->num_bytes, 4,1, input_fd);
+    187:
+		188: // Make something the size of the rest and read it in
+		189: ptr = malloc(ret_val->num_bytes);
+		190: fread(ptr, ret_val->num_bytes, 1, input_fd);
+
+  - Fix - Add a check for negative values
+
+    186: fread(&ret_val->num_bytes, 4,1, input_fd);
+    187: 
+		188: // Make something the size of the rest and read it in
+    189: if(ret_val->num_bytes < 0){
+    190:   printf("%d is not a valid size for Gift Card\n",ret_val->num_bytes);
+    191:  exit(1);
+    192: }
+		193: ptr = malloc(ret_val->num_bytes);
+		194: fread(ptr, ret_val->num_bytes, 1, input_fd);
+
+
+crash2.gft
+  - Crash due to animate function and specifically the move cursor and write to cursor functionality.
+    There is no check on the location of the pointer, User can move this anywhere in address space, essentially a write what where vulnerability.
+    mptr starts in the heap so easiest way to crash program was just overwrite a chunk of the heap,
+    I did not debug where in the execution the program actaully crashes, 
+    but by overwriting most of the heap with \xff we know program is likely to crash  
+
+  - Details of crash2.gft 
+    1) Set first character in message to \xff
+    2) Use case 0x01 to store first char in regs - doesnt matter where just reference same index later
+    3) Use case 0x03 to move mptr "backwards" (subtract)  - pass \x80 (-128) and \xc8 (-56) 
+    4) Use case 0x02 to write \xff to mptr - did roughly 180 times (amount moved back) - use case 0x03 to move mptr forward 1 after write
+
+  - Fix - Added offset value for mptr instead of changing mptr - check value of offset stays between 0 and 32 - cannot move outside of msg
+
+    char offset = 0;
+    .
+    .
+    .
+    case 0x01:
+        regs[arg1] = *(mptr+offset);
+        break;
+    case 0x02:
+        *(mptr+offset) = regs[arg1];
+        break;
+    case 0x03:
+        //Only move pointer through offset variable and do not allow offset outside of message
+        if(offset+(char)arg1<32 && offset+(char)arg1>0){
+          offset += (char)arg1;
+        }
+        break;
+
+hang.gft
+   - Infinite loop is possible because animate function allows program to jump backwards with no limitations.
+     By passing case 0x09 an arg of -3 the program will continually loop over that one "instruction" 
+     Can be done with "\x09\xfd\x00" 
+
+   - Fix - Add a total instruction count to the animate function and set a limit for it
+   
+     int ic = 0;
+     .
+     .
+     .
+     ic+=1;
+     if (pc > program+256 || ic > 999) break;
+

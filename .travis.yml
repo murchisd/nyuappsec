@@ -2,8 +2,6 @@ language: c
 compilier: gcc
 install: skip
 script:
-  - cd assignment1
+  - cd assignment1/source
   - make
-  - ./giftcardreader 1 crash1.gft
-  - ./giftcardreader 1 crash2.gft
-  - timeout 1 ./giftcardreader 1 ./hang.gft
+  - ../run-tests.sh
