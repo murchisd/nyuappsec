@@ -1,0 +1,78 @@
+Coverage Tests
+  - Neither of my first two tests actually made it to the print functionality for Record Type 1 or 2
+  - The two tests were simple Amount Change and Message gift cards, which did not crash anything but ensure proper functionality
+  - cov1.gft covers print functionality for Record Type 1 (Amount Change) - Lines 82-86
+  - cov2.gft covers print functionality for Record Type 2 (Message) - Lines 90-91
+  - Coverage report before creating cov1.gft and cov2.gft is located in assignment1/giftcardreader-lcov
+    Overall coverage rate:
+      lines......: 65.6% (236 of 360 lines)
+      functions..: 83.3% (10 of 12 functions)
+  - Coverage report after creating cov1.gft and cov2.gft is located in assignment1/giftcardreader-lcov-part3
+    Overall coverage rate:
+      lines......: 83.3% (300 of 360 lines)
+      functions..: 91.7% (11 of 12 functions)
+
+AFL Tests
+  - AFL tests are stored in assignment1/afl_findings/(queue|crashes|hangs)
+  - Tests generated after fixing the 2 crashes are located at assignment1/afl_findings_postfix/(queue|crashes|hangs)
+
+AFL Crashes
+
+- Key to debugging these was adding a print statement in animate that for each instruction would print op,arg1, and arg2.
+  This made it very easy to see where problematic instructions were and how to mitigate them.
+
+id:000012,sig:06,src:000060,op:havoc,rep:32
+  - was causing "*** stack smashing detected ***: <unknown> terminated"
+  - After examining the hex and when the crash occurs, I determined this occured in the animate program due to function 0x01
+  - 0x01 places character from current position of mptr in reg[args1], there was no check for arg1, and since reg was a local function variable
+    it was located on the stack. By specifying a value larger than 16 for args1 values on the stack could be overwritten
+
+  - Fix - Add a check for arg1 for case 0x01 and 0x02 (Could allow read from stack)
+          Checks whether arg1 < 16 and >=0
+
+          case 0x01:
+                if(arg1<16 && arg1>=0){
+                  regs[arg1] = *(mptr+offset);
+                }
+                break;
+            case 0x02:
+                if(arg1<16 && arg1>=0){
+                  *(mptr+offset) = regs[arg1];
+                }
+                break;
+
+
+id:000030,sig:11,src:000106+000117,op:splice,rep:2
+  - Ran giftcardreader with the debug print statement showing op,arg1, and arg2. 
+    Only cases actual cases reached were for 0x00 (does nothing), 0x01 and 0x02 (both fixed), and 0x05.
+    After examining, case 0x05 realized it has a similar issue described above except instead of setting a value it xors two values.
+    Case 0x05 xors reg[arg1] with reg[arg2] and stores result in reg[arg1]. There were no checks on arg1 or arg2.
+    Similar to the crash caused by id:000012, this could be used to write to the Stack, if arg1 is set to a nuber larger than 16.
+    Even though the attacker can only xor it would still be trivial to write any value they want.
+    The current value on the stack can be leaked and then xor calculated. 
+    For example, set reg[0] to 0x00 (Case 4), xor reg[0] with reg[stack_offset] (Case 5), read arg[0] (Case 2 then 7),
+    xor current value with desired value, set reg[0] with that value (Case 4), xor reg[stack_offset] with reg[0] (Case 5)  
+
+  - Fix - Add a check for arg1 and arg2 to ensure less than 16 and greater than or equal to 0.
+          After examining case 0x05 realized that case 0x04 and 0x06 have similar issues, added check for those as well
+          
+          case 0x04:
+                if(arg2<16 && arg2>=0){
+                  regs[arg2] = arg1;
+                }
+                break;
+            case 0x05:
+                if(arg1<16 && arg1>=0 && arg2<16 && arg2>=0){
+                  regs[arg1] ^= regs[arg2];
+                  zf = !regs[arg1];
+                }
+                break;
+            case 0x06:
+                if(arg1<16 && arg1>=0 && arg2<16 && arg2>=0){
+                  regs[arg1] += regs[arg2];
+                  zf = !regs[arg1];
+                }
+                break;
+      
+
+
