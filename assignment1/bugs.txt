@@ -70,3 +70,16 @@ hang.gft
      ic+=1;
      if (pc > program+256 || ic > 999) break;
 
+AFL Crashes
+
+id:000012,sig:06,src:000060,op:havoc,rep:32
+  - was causing "*** stack smashing detected ***: <unknown> terminated"
+  - After examining the hex and when the crash occurs, I determined this occured in the animate program due to function 0x01
+  - 0x01 places character from current position of mptr in reg[args1], there was no check for arg1, and since reg was a local function variable
+    it was located on the stack. By specifying a value larger than 16 for args1 values on the stack could be overwritten
+
+  - Fix - Add a check for arg1 for case 0x01 and 0x02 (Could allow read from stack)
+          Checks whether arg1 < 16 and >=0
+
+
+

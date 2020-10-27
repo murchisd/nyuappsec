@@ -26,14 +26,20 @@ void animate(char *msg, unsigned char *program) {
         op = *pc;
         arg1 = *(pc+1);
         arg2 = *(pc+2);
+        //printf("PC: %d\n",pc-program);
+        printf("op: %x, arg1 %x, arg2 %x\n",op,arg1,arg2);    
         switch (*pc) {
             case 0x00:
                 break;
             case 0x01:
-                regs[arg1] = *(mptr+offset);
+                if(arg1<16 && arg1>=0){
+                  regs[arg1] = *(mptr+offset);
+                }
                 break;
             case 0x02:
-                *(mptr+offset) = regs[arg1];
+                if(arg1<16 && arg1>=0){
+                  *(mptr+offset) = regs[arg1];
+                }
                 break;
             case 0x03:
                 //Only move pointer through offset variable and do not allow offset outside of message
@@ -84,6 +90,7 @@ void print_gift_card_info(struct this_gift_card *thisone) {
 	printf("   Customer ID: %32.32s\n",gcd_ptr->customer_id);
 	printf("   Num records: %d\n",gcd_ptr->number_of_gift_card_records);
 	for(int i=0;i<gcd_ptr->number_of_gift_card_records; i++) {
+    printf("print i: %d\n",i);
   		gcrd_ptr = (struct gift_card_record_data *) gcd_ptr->gift_card_record_data[i];
 		if (gcrd_ptr->type_of_record == 1) {
 			printf("      record_type: amount_change\n");
@@ -210,13 +217,15 @@ struct this_gift_card *gift_card_reader(FILE *input_fd) {
 		ptr += 32;	
 		/* JAC: Something seems off here... */
 		gcd_ptr->number_of_gift_card_records = *((char *)ptr);
+    printf("num giftcards: %d\n", gcd_ptr->number_of_gift_card_records);
 		ptr += 4;
 
 		gcd_ptr->gift_card_record_data = (void *)malloc(gcd_ptr->number_of_gift_card_records*sizeof(void*));
 
 		// Now ptr points at the gift card recrod data
 		for (int i=0; i<=gcd_ptr->number_of_gift_card_records; i++){
-			//printf("i: %d\n",i);
+			printf("i: %d\n",i);
+      printf("%d\n", ptr-optr);
 			struct gift_card_record_data *gcrd_ptr;
 			gcrd_ptr = gcd_ptr->gift_card_record_data[i] = malloc(sizeof(struct gift_card_record_data));
 			struct gift_card_amount_change *gcac_ptr;
@@ -227,10 +236,11 @@ struct this_gift_card *gift_card_reader(FILE *input_fd) {
 			gcrd_ptr->record_size_in_bytes = *((char *)ptr);
             //printf("rec at %x, %d bytes\n", ptr - optr, gcrd_ptr->record_size_in_bytes); 
 			ptr += 4;	
-			//printf("record_data: %d\n",gcrd_ptr->record_size_in_bytes);
+			printf("record_data: %d\n",gcrd_ptr->record_size_in_bytes);
 			gcrd_ptr->type_of_record = *((char *)ptr);
 			ptr += 4;	
-            //printf("type of rec: %d\n", gcrd_ptr->type_of_record);
+      printf("type of rec: %d\n", gcrd_ptr->type_of_record);
+      
 
 			// amount change
 			if (gcrd_ptr->type_of_record == 1) {

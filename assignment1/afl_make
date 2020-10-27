@@ -1,0 +1,5 @@
+all: giftcardreader
+
+giftcardreader: giftcardreader.c
+	afl-gcc -o ./giftcardreader_afl giftcardreader.c  
+

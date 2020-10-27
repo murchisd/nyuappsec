@@ -1,1 +1,0 @@
-http://ltp.sourceforge.net/coverage/lcov.php
