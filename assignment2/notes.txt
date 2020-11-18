@@ -60,7 +60,7 @@ card_query = Card.objects.raw('select id from LegacySite_card where data = \'%s\
 
  
 
-    Signature = 1' UNION SELECT <column 2> from LegacySite_users WHERE username= 'admin
+    Signature = 1' UNION SELECT password from LegacySite_users WHERE username= 'test1
 
     FIX - update the raw query to  card_query = Card.objects.get(data=signature)
 
@@ -81,7 +81,11 @@ Other Bugs/Issues
     GiftCardSite/settings.py
         Line 27 - DEBUG=true
 
-- import_db.sh seems to have imported data into the wrong columns in LegacySite_users
+- import_db.sh seems to have imported data into the wrong columns in LegacySite_user
+
+- Had to update some file opens to include 'wb' instead of 'w'
+
+- Had to update write_card_data call to include correct number of parameters
 
  
 

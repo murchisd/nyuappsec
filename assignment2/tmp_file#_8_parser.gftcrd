@@ -1,0 +1,20 @@
+total 256
+drwxr-xr-x 6 donald donald   4096 Nov 18 13:55 .
+drwxr-xr-x 5 donald donald   4096 Nov 18 13:52 ..
+-rw-r--r-- 1 donald donald   4141 Nov 18 13:52 bugs.txt
+-rw-r--r-- 1 donald donald 172032 Nov 18 00:43 db.sqlite3
+-rw-r--r-- 1 donald donald    290 Nov 18 02:33 giftcard_examlpe.g.json
+-rwxr-xr-x 1 donald donald  17208 Nov 18 13:50 giftcardreader
+drwxr-xr-x 3 donald donald   4096 Nov 17 23:28 GiftcardSite
+drwxr-xr-x 3 donald donald   4096 Nov 17 23:25 images
+-rwxr-xr-x 1 donald donald    132 Nov 17 23:30 import_dbs.sh
+drwxr-xr-x 4 donald donald   4096 Nov 18 01:16 LegacySite
+-rwxr-xr-x 1 donald donald    632 Nov 17 23:26 manage.py
+-rw-r--r-- 1 donald donald   4896 Nov 18 13:52 notes.txt
+-rw-r--r-- 1 donald donald    116 Nov 18 02:03 original_example.gft
+-rw-r--r-- 1 donald donald    856 Nov 17 23:31 products.csv
+-rw-r--r-- 1 donald donald    214 Nov 18 13:55 reverse_8_parser.gftcrd
+drwxr-xr-x 7 donald donald   4096 Nov 17 23:25 templates
+-rw-r--r-- 1 donald donald      0 Nov 18 13:57 tmp_file
+-rw-r--r-- 1 donald donald      0 Nov 18 13:57 tmp_file#_8_parser.gftcrd
+-rw-r--r-- 1 donald donald    136 Nov 17 23:31 users.csv
