@@ -6,6 +6,13 @@ http://127.0.0.1:8000/gift/0?director=%3Cscript%3Ealert(1)%3C/script%3E
 
 FIX - Change {{director|safe}} to {{director}} in all html templates
 
+gift.html:60
+item-single.html:62
+
+Test 
+
+try{
+
 ##############################################################
 END XSS Attack
 ##############################################################
