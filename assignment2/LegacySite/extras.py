@@ -40,17 +40,24 @@ def write_card_data(card_file_path, product, price, customer):
     with open(card_file_path, 'w') as card_file:
         card_file.write(json.dumps(data_dict))
 
+
 def parse_card_data(card_file_data, card_path_name):
-    print(card_file_data)
+    #print(card_file_data)
     try:
         test_json = json.loads(card_file_data)
         return card_file_data
     except (json.JSONDecodeError, UnicodeDecodeError):
         pass
     with open(card_path_name, 'wb') as card_file:
+        #Not addressing the directory traversal - that needs to be done prior to this
+        card_file.write(card_file_data)
+    # To Fix the Command Injection - just remove the user input from the system call
+    # Going to write card_file_data to hardcoded file and read from there
+    with open("ci_fix_tmp_file", 'wb') as card_file:
         card_file.write(card_file_data)
     # KG: Are you sure you want the user to control that input?
-    ret_val = system(f"./{CARD_PARSER} 2 {card_path_name} > tmp_file")
+    ret_val = system(f"./{CARD_PARSER} 2 'ci_fix_tmp_file' > tmp_file")
+    #ret_val = system(f"./{CARD_PARSER} 2 {card_path_name} > tmp_file")
     if ret_val != 0:
         return card_file_data
     with open("tmp_file", 'r') as tmp_file:
