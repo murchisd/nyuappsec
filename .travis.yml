@@ -1,8 +1,10 @@
-language: c
-compilier: gcc
-install: skip
+language: python
+python:
+  - "3.6"
+env:
+  - DJANGO_VERSION=3.1.3
+install:
+  - pip install -r requirements.txt
 script:
-  - cd assignment1/source
-  - make
-  - cd ..
-  - ./run-tests.sh
+  - cd assignment2
+  - python manage.py test

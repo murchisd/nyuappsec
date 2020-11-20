@@ -1,0 +1,8 @@
+language: c
+compilier: gcc
+install: skip
+script:
+  - cd assignment1/source
+  - make
+  - cd ..
+  - ./run-tests.sh
