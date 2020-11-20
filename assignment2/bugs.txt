@@ -18,6 +18,23 @@ CSRF Attack
 
 http://127.0.0.1:8000/gift/1?director=%3Cscript%3E%0Avar%20xhttp%20%3D%20new%20XMLHttpRequest%28%29%3B%0Axhttp.open%28%22POST%22%2C%20%22%2Fgift%2F3%22%2C%20true%29%3B%0Axhttp.setRequestHeader%28%22Content-type%22%2C%20%22application%2Fx-www-form-urlencoded%22%29%3B%0Axhttp.send%28%22amount%3D2000%26username%3Dtest2%22%29%3B%20%0A%3C%2Fscript%3E
 
+
+FIX - 
+
+Added 'django.middleware.csrf.CsrfViewMiddleware', to settings.py MIDDLEWARE section - Line 49
+
+Added {% csrf_token %} to templates with <form method=POST ...>
+gift.html -line 78
+item-single.html - line 79 (Already had {% csrf_token %})
+login.html - line 78
+register.html - line 72
+use-card.html - line 93
+
+After applying fix and running attack get following message and attack fails
+
+Forbidden (CSRF token missing or incorrect.): /gift/3
+[20/Nov/2020 01:02:46] "POST /gift/3 HTTP/1.1" 403 2513
+
 ##############################################################
 End CSRF Attack
 ##############################################################
