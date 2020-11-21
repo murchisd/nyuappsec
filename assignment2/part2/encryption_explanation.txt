@@ -110,6 +110,8 @@ Because I updated the backend db that the app was using now the migrations do cr
 
 Finally, I had the encrypted database integrated with the Django web app, and no keys anywhere on the server or in the code. It is important to note, because django tests do not use the existing database. I can feed a fake password to "python3 manage.py test". This is important for testing with travis as there is no user input.
 
+*** Issues with testing ****
+The getpass was not accepting redirected input, so had to add additional cheecks in settings.py to check for the command line argument "test" and update PRAGMA_KEY appropriately 
 
 
 

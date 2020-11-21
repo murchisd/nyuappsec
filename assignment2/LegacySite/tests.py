@@ -1,9 +1,11 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test import Client
 from LegacySite.models import User, Product, Card
 from LegacySite.extras import parse_card_data
+from django.conf import settings
 
 # Create your tests here.
+
 
 class CSRFTestClass(TestCase):
   def setUp(self):

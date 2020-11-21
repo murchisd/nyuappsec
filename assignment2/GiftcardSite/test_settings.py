@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 import base64
 import getpass
-import sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -149,10 +148,6 @@ STATIC_URL = '/static/'
 # Auth Backends
 AUTHENTICATION_BACKENDS = ['LegacySite.models.OurBackend']
 
-PRAGMA_KEY = "testing_passphrase"
-if len(sys.argv) > 1 and sys.argv[1] != 'test':
-  print("Enter the passphrase for DB: ")
-  PRAGMA_KEY = getpass.getpass()
-
+PRAGMA_KEY = 'fake_passphrase'
 
 
