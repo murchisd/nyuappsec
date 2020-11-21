@@ -9,4 +9,4 @@ install:
   - pip install -r requirements.txt
 script:
   - cd assignment2
-  - python manage.py test < "passphrase"
+  - python manage.py test < "input.txt"
