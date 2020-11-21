@@ -2,6 +2,7 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
+from django.conf import settings
 
 
 class Migration(migrations.Migration):
@@ -12,6 +13,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        
+        migrations.RunSQL("PRAGMA key='%s';" % (settings.PRAGMA_KEY,)),
         migrations.CreateModel(
             name='Product',
             fields=[

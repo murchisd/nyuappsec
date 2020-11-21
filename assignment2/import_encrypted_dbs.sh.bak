@@ -1,0 +1,19 @@
+echo -n "Password: "
+read -s password
+
+sqlcipher db_encrypted.sqlite3 << END_COMMANDS
+.output db_encrypt.sql
+.dump
+.exit
+END_COMMANDS
+
+rm -rf db_encrypted.sqlite3
+
+sqlcipher db_encrypted.sqlite3 << END_COMMANDS2
+PRAGMA key = '$password';
+.read db_encrypt.sql
+.mode csv
+.import products.csv LegacySite_product
+.import users.csv LegacySite_user
+.exit
+END_COMMANDS2

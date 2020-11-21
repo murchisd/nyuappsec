@@ -1,0 +1,121 @@
+For encrypting the database, I chose to use sqlcipher to implement transparent database encryption.
+
+I chose to do this because it seemed like the easiest way to add encryption to the database with minimal changes to the existing app.
+SQLCipher is a popular SQLite extension and there is an existing Django plugin for integration (django-sqlcipher).
+SQLCipher also has an easy way to re-key the database when the key needs to be rotated.
+
+For the Key generation chose to use Key Derivation from a passphrase
+
+From https://www.zetetic.net/sqlcipher/sqlcipher-api/#PRAGMA_key
+    Example 1: Passphrase with Key Derivation
+
+    The key itself can be a passphrase, which is converted to a key using PBKDF2 key derivation. The result is used as the encryption key for the database.
+
+    sqlite> PRAGMA key = 'passphrase';
+
+
+Since the key is generated from a passphrase, I needed a secure way to store the passphrase. 
+Based on the technology available to me, I chose to just use a separate password manager and force the admins to enter startup of the application.
+This does not make automated deployment as easy, but will be much more secure than storing the passphrase in a file or environmnet variable,
+especially since one of the attacks in part 1 led to a reverse shell. We also have a "follow the sun" model and always have an admin on duty to 
+enter passphrase in case of unexpected crash.
+
+
+Implementation: 
+
+First I installed sqlcipher
+
+  sudo apt-get install sqlcipher  
+
+Then I tested the database encryption. This is simple just create a new database "sqlcipher db_encrypted.db" and set the key, and hexdump the contents to verify its encrypted. You can also reopen the DB and try a command like ".tables" and it should return "Error: file is encrypted or is not a database" until the key is set.
+
+Now i just needed to make this usable in the web app. I discovered that it was not very straightforward to integrate sqlcipher with django. The existing django plugin I had previously seen, django-sqlcipher - https://github.com/codasus/django-sqlcipher, integration instructions did not work as stated. 
+
+The instructions stated add 'sqlcipher' to INSTALLED_APPS and set ENGINE equal to 'sqlcipher.backend' in DATABASES and add PRAGMA_KEY equal to secret passphrase. Doing this and using pip3 to install would return an error along the lines of 'sqlcipher.backend' not found. I ended up just copying the package into my working directory so that the path sqlcipher/backend existed (I had to customize later so this I believe this was easier for deployment). 
+
+The plugin just wraps django.db.backends.sqlite3.base (Should have realized there was an issues with this, discuss later) and intercepts initial connections to set the key so I tested with the existing db and it worked fine, but this DB was still unencrypted. One handy feature of the Django is the migrations. I did not want to lose the ability to migrate changes to the Models to schema in the DB, but the migrations were using the django.db.backends.sqlite3 still (This caused problems later). 
+
+To handle the migrations created an unencrypted databases, I modified the import_dbs.sh script to re-create the DB as an encrypted DB.
+
+    echo -n "Password: "
+    read -s password
+
+    sqlcipher db_encrypted.sqlite3 << END_COMMANDS
+    .output db_encrypt.sql
+    .dump
+    .exit
+    END_COMMANDS
+
+    rm -rf db_encrypted.sqlite3
+
+    sqlcipher db_encrypted.sqlite3 << END_COMMANDS2
+    PRAGMA key = '$password';
+    .read db_encrypt.sql
+    .mode csv
+    .import products.csv LegacySite_product
+    .import users.csv LegacySite_user
+    .exit
+    END_COMMANDS2
+
+This allowed me to still use the migrate functionality but end with an encrypted DB. The deployment instructions were changed slightly:
+
+python manage.py makemigrations LegacySite
+python manage.py makemigrations
+python manage.py migrate
+sh import_encrypted_dbs.sh
+
+At this point I tried running the server, but I was receiving an error "file is encrypted or is not a database". Looking in to the backtrace I discovered the error was occuring during the initial connection in the django-sqlcipher plugin. The error was being thrown at line 7 below.
+
+5 def sqlite_set_pragma(connection, **kwargs):
+6    pragma_sql = "PRAGMA key='%s';" % (settings.PRAGMA_KEY,)
+7    cursor = connection.cursor()
+8    cursor.execute(pragma_sql)
+9    cursor.close()
+
+I realized because this plugin wraps the django.db.backends.sqlite3.base it cannot retrieve a cursor on an encrypted file in order to execute "PRAGMA key = ..." Since I was already down this rabbit hole, I tried to figure out a way to make this work. I realized all I need to do is get python integrations with sqlcipher API to be used instead of with sqlite3. 
+
+I found pysqlcipher3 package which is a Python3 interface for sqlcipher. When installing through pip3, the build failed but would end with message pysqlcipher3 successfully installed. This caused some issues but eventually found I needed libsqlcipher-dev installed first.   
+
+sudo apt-get install libsqlcipher-dev
+pip3 install pysqlcipher3
+
+Now when running "python3 -c 'import pysqlcipher3'" I was no longer receiving module not found errors. Now I still needed to create a new database class to use pysqlcipher instead of sqlite3. To do this, I just tweaked the exising django backend for sqlite3 to import sqlcipher3 instead of sqlite3. Since pysqlcipher3 is just a minor tweak from sqlite3 and linked with sqlcipher instead of sqlite3, I figured this should work.
+
+grep sqlite3 /usr/local/lib/python3.6/dist-packages/django/db/backends/sqlite3/* | grep import
+
+There were only two locations that I found.
+
+base.py:from sqlite3 import dbapi2 as Database
+schema.py:import sqlite3
+
+So I copied the sqlite3 backend to my web app (All references to django base were full paths so did not break anything) and change the two lines i found.
+
+base.py:from pysqlcipher3 import dbapi2 as Database
+schema.py:import pysqlcipher3 as sqlite3
+
+I started up the server and played around and everything was working fine. I ran the django tests that had been created and they returned with no errors. Finally, I just updated settings.py to use getpass to get the PRAGMA_KEY passphrase from the user at start time. It prompts the user twice because of the way django-sqlcipher plugin imports settings but that was fine. 
+
+Because I updated the backend db that the app was using now the migrations do create an encrypted database. I update the import script again to no longer destroy and re-create the db any more.
+
+    echo -n "Password: "
+    read -s password
+
+    sqlcipher db_encrypted.sqlite3 << END_COMMANDS
+    PRAGMA key = '$password';
+    .mode csv
+    .import products.csv LegacySite_product
+    .import users.csv LegacySite_user
+    .exit
+    END_COMMANDS
+
+Finally, I had the encrypted database integrated with the Django web app, and no keys anywhere on the server or in the code. It is important to note, because django tests do not use the existing database. I can feed a fake password to "python3 manage.py test". This is important for testing with travis as there is no user input.
+
+
+
+
+
+
+
+
+
+

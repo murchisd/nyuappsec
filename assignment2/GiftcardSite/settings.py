@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 import base64
+import getpass
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -40,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # Custom
     'LegacySite',
+    'sqlcipher',
 ]
 
 MIDDLEWARE = [
@@ -76,10 +78,14 @@ WSGI_APPLICATION = 'GiftcardSite.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        #'ENGINE': 'django.db.backends.sqlite3',
+        #'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'sqlcipher.backend',
+        'NAME': os.path.join(BASE_DIR, 'db_encrypted.sqlite3'),
+        
     }
 }
 
@@ -141,3 +147,8 @@ STATIC_URL = '/static/'
 
 # Auth Backends
 AUTHENTICATION_BACKENDS = ['LegacySite.models.OurBackend']
+
+print("Enter the passphrase for DB: ")
+PRAGMA_KEY = getpass.getpass()
+
+
