@@ -53,3 +53,7 @@ dkms.conf
 
 #Assignment 1 Builds
 assignment1/build
+
+#Assignment 3
+*kustomization.yaml
+
