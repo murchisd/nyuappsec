@@ -21,15 +21,15 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'kmgysa#fz+9(z1*=c0ydrjizk*7sthm2ga1z4=^61$cxcq8b$l'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(int(os.environ.get('DEBUG', 0)))
 
-ALLOWED_HOSTS = ['*']
-#ALLOWED_HOSTS_ENV = os.environ.get('ALLOWED_HOSTS')
-#if ALLOWED_HOSTS_ENV:
-#    ALLOWED_HOSTS.extend(ALLOWED_HOSTS_ENV.split(','))
+#ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS_ENV = os.environ.get('ALLOWED_HOSTS')
+if ALLOWED_HOSTS_ENV:
+    ALLOWED_HOSTS=(ALLOWED_HOSTS_ENV.split(','))
 
 
 # Application definition
@@ -81,7 +81,7 @@ WSGI_APPLICATION = 'GiftcardSite.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'GiftcardSiteDB',
+        'NAME': os.environ.get('MYSQL_DATABASE'),
         'HOST': os.environ.get('MYSQL_HOST'),
         'PORT': '3306',
         'USER': 'root',
@@ -138,7 +138,7 @@ CSS_ROOT = os.path.join(BASE_DIR, "templates/css")
 FONT_ROOT = os.path.join(BASE_DIR, "templates/fonts")
 
 # Random Seed for testing
-RANDOM_SEED = base64.b64decode("2RUHYAyJWdDdXOicZfnTRw==")
+RANDOM_SEED = base64.b64decode(os.environ.get('RANDOM_SEED'))
 
 #AUTH_USER_MODEL
 #AUTH_USER_MODEL = 'LegacySite.User'
