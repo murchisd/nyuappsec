@@ -44,10 +44,10 @@ def register_view(request):
         
         # KG: Uh... I'm not sure this makes sense.
         # Collect data to ensure good password use.
-        if pword not in graphs.keys():
-            graphs[pword] = Counter(f'counter_{pword}', 'The total number of '\
-              + f'times {pword} was used')
-        graphs[pword].inc()
+        #if pword not in graphs.keys():
+        #    graphs[pword] = Counter(f'counter_{pword}', 'The total number of '\
+        #      + f'times {pword} was used')
+        #graphs[pword].inc()
         pword2 = request.POST.get('pword2', None)
         assert (None not in [uname, pword, pword2])
         if pword != pword2:
