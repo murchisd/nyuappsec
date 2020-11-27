@@ -1,1 +1,25 @@
 Part 1 - Removing Unwanted Monitoring
+
+Only unwanted monitoring I found was the password counting. I commented that portion out.
+
+        # KG: Uh... I'm not sure this makes sense.
+        # Collect data to ensure good password use.
+        #if pword not in graphs.keys():
+        #    graphs[pword] = Counter(f'counter_{pword}', 'The total number of '\
+        #      + f'times {pword} was used')
+        #graphs[pword].inc()
+
+Part 2 - Expand reasonable monitoring
+
+Defined counter 
+
+  graphs['404_counter'] = Counter('database_error_return_404', 'The total number'\
+  + ' of 404 responses.')
+
+Added increments each time 404 error was returned
+
+  graphs['404_counter'].inc()
+
+
+Part 3 - Implementing Prometheus
+ 
