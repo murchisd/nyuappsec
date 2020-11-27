@@ -22,4 +22,58 @@ Added increments each time 404 error was returned
 
 
 Part 3 - Implementing Prometheus
+
+Installing Helm
+
+  https://helm.sh/docs/intro/install/
+
+    curl https://baltocdn.com/helm/signing.asc | sudo apt-key add -
+    sudo apt-get install apt-transport-https --yes
+    echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+    sudo apt-get update
+    sudo apt-get install helm
  
+Adding Prometheus repo
+
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+Run Prometheus
+
+    helm install prometheus-community/prometheus --generate-name
+
+View config maps 
+
+    kubectl get configmap prometheus-1606493721-server -o yaml > server_configmap.yaml
+
+    kubectl get configmap prometheus-1606493721-alertmanager -o yaml > alertmanager_configmap.yaml
+
+Edit ConfigMap - Only added 4 lines in the scrape_configs section
+
+    kubectl edit configmap prometheus-1606493721-server
+
+        scrape_configs:
+        - job_name: prometheus
+          static_configs:
+          - targets:
+            - localhost:9090
+        - job_name: giftcardsite
+          static_configs:
+          - targets:
+            - proxy-service:8080
+
+Save current config
+
+    kubectl get configmap prometheus-1606493721-server -o yaml > server_configmap_with_giftcardsite.yaml
+
+Accessing Prometheus
+
+    export POD_NAME=$(kubectl get pods --namespace default -l "app=prometheus,component=server" -o jsonpath="{.items[0].metadata.name}")
+    kubectl --namespace default port-forward $POD_NAME 9090
+
+Typed 404 in search bar and suggestions came up, clicked database_error_return_404_total and saw statistics. Provided screenshot in prometheus folder.
+
+
+I did not provide all yaml files to run prometheus because I used helm and the files and in the repo. To view the files that make up the repo, "helm fetch prometheus-community/prometheus --untar" can be used. The only steps I took and edits I made to the configuration were documented above.
+
+
+

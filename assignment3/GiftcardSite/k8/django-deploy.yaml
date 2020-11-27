@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: assignment3-django-deploy
-          image: nyuappsec/assign3:v1
+          image: nyuappsec/assign3:v2
           ports:
             - containerPort: 8000
           env:
