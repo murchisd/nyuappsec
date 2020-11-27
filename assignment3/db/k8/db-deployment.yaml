@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: mysql-container
-          image: nyuappsec/assign3-db:v0
+          image: nyuappsec/assign3-db:v1
           env:
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:

@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: assignment3-django-seed
+spec:
+  template:
+    spec:
+      containers:
+        - name: assignment3-django-seed
+          image: nyuappsec/assign3:v1
+          
+          command: ["/bin/sh", "-c"]
+          args: ["ls -L1 /data | while read line ; do python manage.py loaddata /data/$line ; done"]
+          ports:
+            - containerPort: 8000
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-info
+                  key: root-password
+
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-info
+                  key: database
+
+            - name: MYSQL_HOST
+              value: mysql-service
+
+            - name: ALLOWED_HOSTS
+              valueFrom:
+                secretKeyRef:
+                  name: django-generic
+                  key: allowed-hosts
+
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                    name: django-generic
+                    key: secret-key
+
+            - name: RANDOM_SEED
+              valueFrom:
+                secretKeyRef:
+                    name: django-generic
+                    key: random-seed
+
+      restartPolicy: Never

@@ -34,6 +34,7 @@ class Product(models.Model):
     product_image_path = models.CharField(max_length=100, unique=True)
     recommended_price = models.IntegerField()
     description = models.CharField(max_length=250)
+#    test_number = models.CharField(max_length=250, default="test")
 
 class Card(models.Model):
     id = models.AutoField(primary_key=True)

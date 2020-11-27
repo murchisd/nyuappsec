@@ -1,0 +1,46 @@
+The Kubernetes jobs are located in jobs/k8
+
+- django-migrations-job.yaml
+- django-seed-job.yaml
+
+The new order for initial deployemnt of the app is the following (Might want to move all secret files to a folder to create at once):
+
+kubectl apply -f db/k8
+kubectl apply -f GiftCardSite/k8/django-generic-secret.yaml
+kubectl apply -f jobs/k8/django-migrations-job.yaml
+kubectl apply -f jobs/k8/django-seed-job.yaml
+kubectl apply -f GiftCardSite/k8
+kubectl apply -f proxy/k8
+
+For both of the jobs, I use the docker image created for the Django app created by running below command (Where X is the new version number)
+
+docker build -t nyuappsec/assign3:vX
+
+-----------------------------------------------------------------------
+Migrations Job:
+
+To get the migrations working, I edited the db/Dockerfile to no longer include the seed data or the init sql script to create and seed the database in the db image.
+
+Now I could just use django migrations to create all of the tables. By initially using the django migrations and leaving the 0001_initial.py migration in the django image, makemigrations can be run in the future for any new images and be used to update the database without destroying the db pod. 
+
+The Kubernetes job essentially just runs "python manage.py makemigrations" then "python manage.py migrate"
+
+Line 12 - command: ["/bin/sh", "-c"]
+Line 13 - args: ["python manage.py makemigrations; python manage.py migrate"]
+
+If a new image is created, Line 10 "image: <image>" of django-migrations-job.yaml needs to be updated to point to the new image. As long as the secrets are still loaded "kubectl apply -f jobs/k8/django-migrations-job.yaml" should successfully migrate the new models to the dbschema. 
+
+-----------------------------------------------------------------------
+Seed job:
+
+For the seed job, I added a line from the original Dockerfile to stage the seed data needed for the database. This line copies any files in the jobs/data directory to /data. These files should be json files that match the format of those generated from "python manage.py dumpdata <app>.<model>"
+
+Line 24 - COPY ./jobs/data /data
+
+The django-seed-job.yaml will run "python manage.py loaddata /data/<json file>" for every file that was in the jobs/data directory using the following command:
+
+Line 12 - command: ["/bin/sh", "-c"]
+Line 13 - args: ["ls -L1 /data | while read line ; do python manage.py loaddata /data/$line ; done"]
+
+This way anytime a model is updated and a new image is created, the developer can add new seed data to upload without having to change any of the yaml or docker files.
+
